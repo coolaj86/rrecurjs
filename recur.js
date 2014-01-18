@@ -117,7 +117,7 @@
         return;
       }
 
-      if ('UNTIL' === k) {
+      if ('UNTIL' === k || 'DTSTART' === k) {
         v = v.replace(/\-|:/g, '').replace(/\.\d+/, '');
       }
 
