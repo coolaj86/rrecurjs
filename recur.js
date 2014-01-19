@@ -137,7 +137,18 @@
     return pairs.join(';');
   }
 
-  exports.Recur = {};
+  function Recur(thing) {
+    var me = this
+      ;
+
+    if (!(me instanceof Recur)) {
+      return new Recur(thing);
+    }
+
+    me.init(thing);
+  }
+
+  exports.Recur = Recur;
   exports.Recur.parse = parse;
   exports.Recur.stringify = stringify;
 }('undefined' !== typeof exports && exports || new Function('return this')()));
