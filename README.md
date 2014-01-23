@@ -9,6 +9,8 @@ You put in an object like this:
 { "freq": "weekly"
 , "until": "2015-01-01T10:30:00.000Z"
 , "byday": ["tu", "th"]
+, "byhour": [4]
+, "byminute": [30]
 }
 ```
 
@@ -31,7 +33,7 @@ via download
 
 ```bash
 wget https://raw2.github.com/coolaj86/rrecurjs/master/rrecur.js
-wget https://raw2.github.com/coolaj86/rrecurjs/master/rrecur-interval.js
+wget https://raw2.github.com/coolaj86/rrecurjs/master/rrecur-iterator.js
 ```
 
 and insert the script tag, of course
@@ -40,14 +42,14 @@ and insert the script tag, of course
 <script src="underscore.js"></script>
 <script src="rrule.js"></script>
 <script src="moment.js"></script>
-<script src="recur.js"></script>
+<script src="rrecur.js"></script>
 ```
 
 ```jade
 script(src="underscore.js")
 script(src="rrule.js")
 script(src="moment.js")
-script(src="recur.js")
+script(src="rrecur.js")
 ```
 
 I know, it's a lot of dependencies... but that's just how it is.
@@ -58,7 +60,7 @@ but `moment` is a must. JavaScript's Date object is just too messed up.
 ### node.js
 
 ```bash
-npm install recur
+npm install rrecur
 ```
 
 ### Usage
@@ -70,14 +72,14 @@ This snippet will work both in the Browser and with Node.js
 (function (exports) {
   'use strict';
 
-  var Recur = require('recur').Recur
+  var Rrecur = require('rrecur').Rrecur
     , rfcString
     , rruleObj
     ;
 
-  rruleObj = Recur.parse('FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU');
+  rruleObj = Rrecur.parse('FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU');
 
-  rfcString = Recur.stringify({
+  rfcString = Rrecur.stringify({
     "freq": "monthly"
   , "interval": "2"
   , "count": "10"
