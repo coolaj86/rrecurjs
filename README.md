@@ -23,6 +23,11 @@ Installation
 
 ### browser
 
+**NOTE**: you only need `rrecur.js` for the basic `JSON <-> RRULE` conversion.
+If you want to actually find the occurances you'll need
+`underscore.js`, `rrule.js`, and `moment.js`, and `rrecur-iterator.js`.
+However, in some future version I may be able to eliminate `underscore.js` and `rrule.js`.
+
 via bower
 
 ```bash
@@ -43,6 +48,7 @@ and insert the script tag, of course
 <script src="rrule.js"></script>
 <script src="moment.js"></script>
 <script src="rrecur.js"></script>
+<script src="rrecur-iterator.js"></script>
 ```
 
 ```jade
@@ -50,6 +56,7 @@ script(src="underscore.js")
 script(src="rrule.js")
 script(src="moment.js")
 script(src="rrecur.js")
+script(src="rrecur-iterator.js")
 ```
 
 I know, it's a lot of dependencies... but that's just how it is.
