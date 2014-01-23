@@ -2,7 +2,7 @@
 (function (exports) {
   'use strict';
 
-  var Recur = exports.Recur || require('./recur').Recur
+  var Rrecur = exports.Rrecur || require('./rrecur').Rrecur
     , RRule
     , moment
     ;
@@ -53,8 +53,8 @@
     return addSubtract(d, ruleObj, method, 2);
   }
 
-  Recur.create = Recur;
-  Recur.prototype.init = function (thing) {
+  Rrecur.create = Rrecur;
+  Rrecur.prototype.init = function (thing) {
     RRule = RRule || exports.RRule || require('rrule').RRule;
     moment = moment || exports.moment || require('moment');
 
@@ -69,9 +69,9 @@
 
     if ('string' === typeof thing) {
       me._rfcString = thing;
-      me._rruleObj = Recur.parse(thing);
+      me._rruleObj = Rrecur.parse(thing);
     } else {
-      me._rfcString = Recur.stringify(thing);
+      me._rfcString = Rrecur.stringify(thing);
       me._rruleObj = thing;
     }
 
@@ -92,7 +92,7 @@
 
     me._rrule = RRule.fromString(me._rfcString);
   };
-  Recur.prototype.previous = function () {
+  Rrecur.prototype.previous = function () {
     var me = this
       , date
       ;
@@ -117,7 +117,7 @@
     return me._m.toDate();
     */
   };
-  Recur.prototype.next = function () {
+  Rrecur.prototype.next = function () {
     var me = this
       , date
       ;
@@ -142,5 +142,5 @@
     return me._m.toDate();
   };
 
-  exports.Recur = Recur;
+  exports.Rrecur = Rrecur;
 }('undefined' !== typeof exports && exports || new Function('return this')()));

@@ -1,14 +1,14 @@
 (function () {
   'use strict';
 
-  var recur = require('./recur').Recur
+  var Rrecur = require('./rrecur').Rrecur
     , RRule = require('rrule').RRule
     , moment = require('moment')
     , ruleObj
     , rfcString
-    , rule
+    , rrule
     , m = moment() // new Date()
-    , before
+    , previous
     , current
     , current2
     , next
@@ -66,21 +66,21 @@
     ruleObj.until = getDtStart(ruleObj, 'add');
   }
 
-  rfcString = recur.stringify(ruleObj);
+  rfcString = Rrecur.stringify(ruleObj);
 
   console.log(rfcString);
-  rule = RRule.fromString(rfcString);
-  before = rule.before(m.toDate());
-  current = rule.after(m.toDate(), true);
-  current2 = rule.after(m.toDate());
+  rrule = RRule.fromString(rfcString);
+  previous = rrule.before(m.toDate());
+  current = rrule.after(m.toDate(), true);
+  current2 = rrule.after(m.toDate());
 
   if (current.toISOString() === current2.toISOString()) {
-    next = rule.after(current);
+    next = rrule.after(current);
   } else {
     next = current2;
   }
 
-  console.log('Previous:', before);
+  console.log('Previous:', previous);
   console.log('Current:', current);
   console.log('Next:', next);
 }());

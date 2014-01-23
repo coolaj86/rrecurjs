@@ -137,18 +137,18 @@
     return pairs.join(';');
   }
 
-  function Recur(thing) {
+  function Rrecur(thing) {
     var me = this
       ;
 
-    if (!(me instanceof Recur)) {
-      return new Recur(thing);
+    if (!(me instanceof Rrecur)) {
+      return new Rrecur(thing);
     }
 
     me.init(thing);
   }
 
-  exports.Recur = Recur;
-  exports.Recur.parse = parse;
-  exports.Recur.stringify = stringify;
+  exports.Rrecur = Rrecur;
+  exports.Rrecur.parse = parse;
+  exports.Rrecur.stringify = stringify;
 }('undefined' !== typeof exports && exports || new Function('return this')()));

@@ -2,7 +2,7 @@
 (function (exports) {
   'use strict';
 
-  var Recur = exports.Recur || require('./recur-iterator').Recur
+  var Rrecur = exports.Rrecur || require('./rrecur-iterator').Rrecur
     , ruleObj
     , recur
     , i
@@ -16,7 +16,7 @@
   , wkst: 'su'
   };
 
-  recur = Recur.create(ruleObj);
+  recur = Rrecur.create(ruleObj);
 
   console.log(recur.previous());
   for (i = 0; i < 10; i += 1) {

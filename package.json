@@ -1,14 +1,14 @@
 {
-  "name": "recur",
+  "name": "rrecur",
   "version": "1.0.0",
   "description": "Convert between RFC2445 RRULE and its JSON equivalent. Useful with rrule.js.",
-  "main": "recur-iterator.js",
+  "main": "rrecur-iterator.js",
   "scripts": {
     "test": "node test.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/coolaj86/recurjs.git"
+    "url": "git://github.com/coolaj86/rrecurjs.git"
   },
   "keywords": [
     "rrule",
@@ -24,7 +24,7 @@
   "author": "AJ ONeal <coolaj86@gmail.com> (http://coolaj86.info/)",
   "license": "Apache-v2",
   "bugs": {
-    "url": "https://github.com/coolaj86/recurjs/issues"
+    "url": "https://github.com/coolaj86/rrecurjs/issues"
   },
   "devDependencies": {
     "rrule": "~2.0.0",

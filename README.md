@@ -1,4 +1,4 @@
-recurjs
+rrecurjs
 =======
 
 Convert between RFC2445 RRULE and its JSON equivalent. Useful with rrule.js.
@@ -24,13 +24,14 @@ Installation
 via bower
 
 ```bash
-bower install recur
+bower install rrecur
 ```
 
 via download
 
 ```bash
-wget https://raw2.github.com/coolaj86/recurjs/master/recur.js
+wget https://raw2.github.com/coolaj86/rrecurjs/master/rrecur.js
+wget https://raw2.github.com/coolaj86/rrecurjs/master/rrecur-interval.js
 ```
 
 and insert the script tag, of course
