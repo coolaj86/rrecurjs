@@ -13,6 +13,7 @@
   "keywords": [
     "rrule",
     "rfc2445",
+    "cron",
     "recur",
     "recurrent",
     "event",
