@@ -1,7 +1,20 @@
 rrecurjs
 =======
 
-Convert between RFC2445 RRULE and its JSON equivalent. Useful with rrule.js.
+Convert between RFC2445 RRULE and its JSON equivalent.
+
+Also tells the previous or next occurence of an event in an rrule chain.
+
+Useful with `rrule.js`.
+
+API
+---
+
+* `Rrecur.parse(rruleStr)` - parses a string rrule (allows non-standard `dtstart` in string)
+* `Rrecur.stringify(rruleObj)` - stringifies an rrule object (allows non-standard `dtstart`)
+* `Rrecur.create(rrule)` - creates a wrapped instance from `rrule.js` from an rrule object or string
+  * `Rrecur#previous()` - cycles backwards through time to find a previous instance up to `dtstart`
+  * `Rrecur#next()` - cycles forwards through time to find the next instance up to `until` or `count`
 
 You put in an object like this:
 
@@ -79,7 +92,7 @@ This snippet will work both in the Browser and with Node.js
 (function (exports) {
   'use strict';
 
-  var Rrecur = require('rrecur').Rrecur
+  var Rrecur = exports.Rrecur || require('rrecur').Rrecur
     , rfcString
     , rruleObj
     ;
