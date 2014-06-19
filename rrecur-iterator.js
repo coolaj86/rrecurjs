@@ -127,6 +127,7 @@
   Rrecur.prototype.next = function () {
     var me = this
       , date
+      , odate
       ;
 
     /*
@@ -141,12 +142,19 @@
     //*/
 
     date = me._m.toDate();
+    odate = me._m.toDate();
     me._m = moment(me._rrule.after(date, me._firstTime));
 
     if (me._firstTime) {
       me._firstTime = false;
     }
-    return me._m.toDate();
+
+    date = me._m.toDate();
+    if ('Invalid Date' === date.toString()) {
+      me._m = moment(odate);
+      return null;
+    }
+    return date;
   };
 
   exports.Rrecur = Rrecur;
