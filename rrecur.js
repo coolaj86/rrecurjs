@@ -118,6 +118,11 @@
       }
 
       if ('UNTIL' === k || 'DTSTART' === k) {
+        if ('number' === typeof v) {
+          v = new Date(v).toISOString();
+        } else if ('object' === typeof v) {
+          v = v.toISOString();
+        }
         v = v.replace(/\-|:/g, '').replace(/\.\d+/, '');
       }
 
