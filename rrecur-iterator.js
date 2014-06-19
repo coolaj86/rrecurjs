@@ -95,6 +95,7 @@
   Rrecur.prototype.previous = function () {
     var me = this
       , date
+      , odate
       ;
 
     if (!me._rule.dtstart) {
@@ -103,15 +104,21 @@
 
     //subtract(me._m, me._rule);
     date = me._m.toDate();
-    console.log('[debug]', date);
-    date = me._rrule.before(date);
+    odate = me._m.toDate();
+    //console.log('[debug]', date);
+    date = me._rrule.before(odate);
     me._m = moment(date);
 
     if (date && me._firstTime) {
       me._firstTime = false;
     }
 
-    return me._m.toDate();
+    date = me._m.toDate();
+    if ('Invalid Date' === date.toString()) {
+      me._m = moment(odate);
+      return null;
+    }
+    return date;
     /*
     me._m = moment(me._rrule.before(me._m.toDate()));
     return me._m.toDate();
