@@ -132,7 +132,7 @@
           vs.push(val.toUpperCase());
         });
         v = vs;
-      } else {
+      } else if ('string' === typeof v) {
         v = v.toUpperCase();
       }
       // if array, it'll join with ',' automatically
