@@ -161,7 +161,7 @@
     //console.log(me._rule);
     me._rfcString = Rrecur.stringify(me._rule);
     // Rrule doesn't support TZID or (my own) LOCALE
-    //console.log(me._rfcString);
+    console.log(me._rfcString);
     me._rrule = RRule.fromString(me._rfcString);
   };
   p.previous = function () {
@@ -191,7 +191,8 @@
       me._m = moment(odate);
       return null;
     }
-    return date;
+
+    return Rrecur.toLocaleISOString(date, me._locale);
     /*
     me._m = moment(me._rrule.before(me._m.toDate()));
     return me._m.toDate();
@@ -229,7 +230,7 @@
       return null;
     }
 
-    return Rrecur.toLocaleISOString(date, me._rule.locale);
+    return Rrecur.toLocaleISOString(date, me._locale);
   };
 
   exports.Rrecur = Rrecur;

@@ -58,6 +58,11 @@
     me.init(rules, date);
   }
 
+  Rrecur.toAdjustedISOString = function (date, locale) {
+    locale = Rrecur.getLocaleFromGmtString(locale.toString());
+    return new Date(Rrecur.toLocaleISOString(date, locale)).toISOString();
+  };
+
   Rrecur.toLocaleISOString = function (date, useoffset) {
     // This outputs local time in ISO format with a UTC offset
     var str
@@ -80,11 +85,14 @@
       + pad(date.getMilliseconds(), 3, '0')
       ;
 
-    if (useoffset && true !== useoffset) {
+    if ('undefined' === typeof useoffset) {
+      useoffset = true;
+    }
+
+    if ('boolean' !== typeof useoffset) {
       // perhaps GMT-0600 (MDT) or just -0600
       str += Rrecur.getOffsetFromLocale(useoffset);
-    }
-    if (false !== useoffset) {
+    } else {
       // GMT-0400 (MDT) => -0400
       // -04:00 => -0400
       str += date
@@ -250,6 +258,7 @@
     // GMT-0600 => -0600
     // -0600 => -0600
     return locale
+      .toString()
       .replace(/.*(?:GMT)?([\-+]\d{2}):?(00)\s?(\(\w{1,6}\))?$/g, '$1$2') // $3 is EST/MDT/etc
       ;
   };
@@ -266,11 +275,19 @@
     , "$1-$2-$3T$4:$5:$6$7$8"
     );
   }
-  function stringifyRruleDate(v) {
+  function stringifyRruleDate(v, forceZ) {
     if ('number' === typeof v) {
       v = Rrecur.toLocaleISOString(new Date(v), false);
     } else if ('object' === typeof v) {
       v = Rrecur.toLocaleISOString(v, false);
+    }
+
+    if (forceZ && !/Z/.test(v)) {
+      if ('string' === typeof forceZ) {
+        v = new Date(v + forceZ).toISOString();
+      } else {
+        v = v += 'Z';
+      }
     }
 
     v = v
@@ -281,7 +298,7 @@
 
     return v;
   }
-  function stringify(orig) {
+  Rrecur.stringify = function (orig) {
     var pairs = []
       , lkeys
       , obj = {}
@@ -338,7 +355,7 @@
       }
 
       if ('UNTIL' === k || 'DTSTART' === k) {
-        v = stringifyRruleDate(v);
+        v = stringifyRruleDate(v, Rrecur.getOffsetFromLocale(obj.locale || new Date()));
       }
 
       if (Array.isArray(v)) {
@@ -358,7 +375,7 @@
     });
 
     return pairs.join(';');
-  }
+  };
 
   // TODO timezone support (in dtstart)? // -0400 +0530
   function defaults(freq, dtstart, rrule/*, tzoffset*/) {
@@ -412,7 +429,6 @@
   exports.Rrecur = Rrecur;
   exports.Rrecur.parse = parse;
   exports.Rrecur.parseDtstart = Rrecur.toRruleDateString;
-  exports.Rrecur.stringify = stringify;
   exports.Rrecur.weekdays = ['su','mo','tu','we','th','fi','sa','su']; // sunday is 0 and 7
   exports.Rrecur.dtstartDefaults = defaults;
 }('undefined' !== typeof exports && exports || new Function('return this')()));
