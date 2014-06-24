@@ -1,6 +1,6 @@
 {
   "name": "rrecur",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Convert between RFC2445 RRULE and its JSON equivalent. Useful with rrule.js.",
   "main": "rrecur-iterator.js",
   "scripts": {
@@ -30,5 +30,8 @@
   "dependencies": {
     "rrule": "~2.0.0",
     "moment": "~2.5.0"
+  },
+  "devDependencies": {
+    "lodash": "^2.4.1"
   }
 }

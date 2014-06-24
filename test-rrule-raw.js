@@ -7,7 +7,7 @@
     , ruleObj
     , rfcString
     , rrule
-    , m = moment() // new Date()
+    , m = moment(new Date('2014-06-16T10:30:00.000-0600')) // new Date()
     , previous
     , current
     , current2

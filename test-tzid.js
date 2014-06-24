@@ -4,31 +4,27 @@
 
   var Rrecur = exports.Rrecur || require('./rrecur-iterator').Rrecur
     , ruleObj
-    , recur
-    , i
-    , prev
+    , ruleStr
     ;
 
+  // TODO https://github.com/coolaj86/rrecurjs/issues/5
+  // http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  // http://www.timeanddate.com/library/abbreviations/timezones/na/mst.html
+  // http://www.timeanddate.com/library/abbreviations/timezones/africa/
   ruleObj = {
     freq: 'weekly'
   , interval: '2'
   //, dtstart: '2014-01-01T10:30:00Z' // beginning of year
   , dtstart: '2014-05-16T10:30:00Z' // a month ago
+  , tzid: 'US-Eastern'
   //, dtstart: '2014-07-16T10:30:00Z' // in the future
   , until: '2014-07-16T10:30:00Z'
-  , byday: [ 'tu', 'su' ]
+  , byday: [ Rrecur.weekdays[2], Rrecur.weekdays[0] ]
   , wkst: 'su'
   };
 
-  recur = Rrecur.create(ruleObj, new Date('2014-06-22T10:30:00'));
-
-  //console.log('prev', recur.previous());
-  /*
-  do (prev = recur.previous()) {
-    console.log('prev', prev);
-  } while()
-  */
-  for (i = 0; i < 10; i += 1) {
-    console.log(i, recur.next());
-  }
+  ruleStr = Rrecur.stringify(ruleObj);
+  ruleObj = Rrecur.parse(ruleStr);
+  console.log(ruleStr);
+  console.log(ruleObj);
 }('undefined' !== typeof exports && exports || new Function('return this')()));
