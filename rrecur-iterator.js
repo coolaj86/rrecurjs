@@ -4,7 +4,7 @@
 
   var Rrecur = exports.Rrecur || require('./rrecur').Rrecur
     , RRule
-    , moment
+    , moment = require('moment')
     , p
     ;
 
@@ -55,6 +55,20 @@
   }
 
   Rrecur.create = Rrecur;
+
+  Rrecur.fromISOStringToLocale = function (iso, locale) {
+    var offset = Rrecur.getOffsetFromLocale(locale)
+      , str
+      ;
+
+    str = moment(new Date(iso)).zone(offset).toString();
+    str = str.replace(/GMT-.*$/, 'GMT-0000');
+    str = new Date(str).toISOString();
+    str = str.replace(/Z$/, offset);
+
+    return str;
+  };
+
   Rrecur.adustByTzid = function (date, tzid) {
     // TODO convert from tzid to whatever moment understands
     // http://www.twinsun.com/tz/tz-link.htm
@@ -77,8 +91,10 @@
     */
   };
   p = Rrecur.prototype;
-  p.init = function (thing, datestr) {
+  p.init = function (thing, today, dtstartZoneless, locale) {
+    // TODO must be ISO / Zulu time
     var me = this
+      , dtstartZulu
       ;
 
     RRule = RRule || exports.RRule || require('rrule').RRule;
@@ -88,9 +104,10 @@
       return;
     }
     me._firstTime = true;
-    me._serverLocale = Rrecur.stringifyGmtZone(new Date());
+    me._serverLocale = Rrecur.getLocaleFromGmtString(new Date());
     me._serverOffset = Rrecur.getOffsetFromLocale(me._serverLocale);
 
+    // TODO strictly check incoming formats
     if ('string' === typeof thing) {
       me.__rfcString = thing;
       me.__rruleObj = Rrecur.parse(thing);
@@ -108,45 +125,89 @@
       }
     });
 
-    datestr = datestr.toString();
-    if (!datestr) {
+    if (locale) {
+      me._rule.locale = locale;
+
+      if (dtstartZoneless) {
+        dtstartZulu = new Date(Rrecur.fromZonelessDtstartToRrule(dtstartZoneless, locale))
+          .toISOString()
+          ;
+
+        me._rule.dtstart = dtstartZulu;
+      }
+    }
+
+    // TODO datestr -> locale
+    today = (today||"").toString();
+    if (!today) {
+
       if (!me._rule.dtstart) {
-        me._rule.dtstart = new Date().toISOString(); // Rrecur.toLocaleISOString(new Date());
+        // Rrecur.toLocaleISOString(new Date());
+        me._rule.dtstart = new Date().toISOString();
         console.error("DTSTART was not specified, falling back to '" + me._rule.dtstart + "'" );
       }
+
       if (me._rule.tzid) {
         console.error('TZIDs are not yet implemented, falling back to Locale');
         console.warn('TODO use moment timezone');
       }
+
+      if (!me._rule.locale) {
+        me._rule.locale = locale;
+      }
+
       if (!me._rule.locale) {
         me._rule.locale = 'GMT-0000 (UTC)'; //new Date().toString();
         console.error("Locale was not specified, falling back to '" + me._rule.locale + "'");
       }
-      me._rule.locale = Rrecur.stringifyGmtZone(me._rule.locale);
-      me._rule.offset = Rrecur.getOffsetFromLocale(me._rule.locale) 
-        ;
 
-      datestr = me._rule.dtstart;
+      me._rule.locale = Rrecur.getLocaleFromGmtString(me._rule.locale);
+      me._rule.offset = Rrecur.getOffsetFromLocale(me._rule.locale);
+
+      //today = me._rule.dtstart;
+      today = new Date();
     }
 
+    if (!dtstartZulu) {
+      if ('object' === typeof today) {
+        today = today.toISOString();
+      }
+      dtstartZulu = (me._rule.dtstart || today).toString();
+    }
+
+    Rrecur.toDateFromISOString = function (iso, locale) {
+      var offset = Rrecur.getOffsetFromLocale(locale)
+        ;
+
+      return new Date(iso.replace(/Z/, '') + offset);
+    };
+
+    Rrecur.dtstartDefaults(
+      me._rule.freq
+      // dtstartZ
+    , Rrecur.toDateFromISOString(dtstartZoneless || dtstartZulu, locale || '-0000')
+    , me._rule
+    , me._rule.locale
+    );
+
+    /*
     me._zoneless = datestr
       .toString()                                     // handles Date, Moment, and String
       ;
 
     if (/GMT/.test(me._zoneless)) {
       me._zoneless = me._zoneless
-        .replace(/GMT[+\-]\d{4}.*/, me._serverLocale)   // handles LocaleString
+        .replace(/GMT[+\-]\d{4}.*$/, me._serverLocale)   // handles LocaleString
         ;
     } else {
       me._zoneless = me._zoneless
-        .replace(/[+\-]\d{4}.*/, 'Z', me._serverOffset) // handles ISOString
+        .replace(/[+\-]\d{4}.*$/, 'Z', me._serverOffset) // handles ISOString
         ;
     }
 
-    //console.log('me._zoneless');
-    //console.log(me._zoneless);
     me._m = moment(me._zoneless);
-    //console.log(me._m.toDate());
+    */
+    me._m = moment(today);
 
     if (me._rule.count) {
       delete me._rule.count;
@@ -158,10 +219,8 @@
     delete me._rule.locale;
     delete me._rule.offset;
 
-    //console.log(me._rule);
-    me._rfcString = Rrecur.stringify(me._rule);
+    me._rfcString = Rrecur.stringify(me._rule, me._locale);
     // Rrule doesn't support TZID or (my own) LOCALE
-    console.log(me._rfcString);
     me._rrule = RRule.fromString(me._rfcString);
   };
   p.previous = function () {
@@ -177,7 +236,7 @@
     //subtract(me._m, me._rule);
     date = me._m.toDate();
     odate = me._m.toDate();
-    //console.log('[debug]', date);
+
     date = me._rrule.before(odate);
     me._m = moment(date);
 
@@ -186,17 +245,13 @@
     }
 
     date = me._m.toDate();
-    //console.log('prev', date);
+
     if ('Invalid Date' === date.toString()) {
       me._m = moment(odate);
       return null;
     }
 
     return Rrecur.toLocaleISOString(date, me._locale);
-    /*
-    me._m = moment(me._rrule.before(me._m.toDate()));
-    return me._m.toDate();
-    */
   };
   p.next = function () {
     var me = this
@@ -217,7 +272,7 @@
 
     date = me._m.toDate();
     odate = me._m.toDate();
-    //console.log('after', date);
+
     me._m = moment(me._rrule.after(date, me._firstTime));
 
     if (me._firstTime) {
@@ -230,6 +285,7 @@
       return null;
     }
 
+    console.log('NEXT', Rrecur.toLocaleISOString(date, me._locale));
     return Rrecur.toLocaleISOString(date, me._locale);
   };
 

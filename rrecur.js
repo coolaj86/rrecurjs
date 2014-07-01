@@ -47,16 +47,25 @@
     return str;
   }
 
-  function Rrecur(rules, date) {
+  function Rrecur(rules, today, dtstart, locale) {
     var me = this
       ;
 
     if (!(me instanceof Rrecur)) {
-      return new Rrecur(rules, date);
+      return new Rrecur(rules, today, dtstart, locale);
     }
 
-    me.init(rules, date);
+    me.init(rules, today, dtstart, locale);
   }
+
+  Rrecur.stripZone = function (str) {
+    return str.replace(/Z$/, '').replace(/-\d+$/, '');
+  };
+
+  Rrecur.fromISOStringToZonelessLocale = function (iso, locale) {
+    return Rrecur.stripZone(Rrecur.fromISOStringToLocale(iso, locale));
+  };
+
 
   Rrecur.toAdjustedISOString = function (date, locale) {
     locale = Rrecur.getLocaleFromGmtString(locale.toString());
@@ -109,7 +118,7 @@
     return vstr.replace(/-/, '').replace(/:/, '').replace(/Z.*/, 'Z');
   }
 
-  Rrecur.toRruleDateString = function (vstr) {
+  Rrecur.fromRruleToISODateString = function (vstr) {
     if ('object' === typeof vstr) {
       // TODO timezone
       vstr = parseDateStr(Rrecur.toLocaleISOString(vstr, false));
@@ -187,8 +196,10 @@
 
       switch (k) {
       case 'DTSTART':
+        v = Rrecur.fromRruleToISODateString(vstr, obj.locale);
+        break;
       case 'UNTIL':
-        v = Rrecur.toRruleDateString(vstr);
+        v = Rrecur.fromRruleToISODateString(vstr);
         break;
       case 'FREQ':
       case 'WKST':
@@ -225,16 +236,6 @@
     return obj;
   }
 
-  function stringifyGmtZone(date) {
-    if ('string' === typeof date) {
-      date = stringifyDateStr(date);
-    }
-    if ('object' !== typeof date) {
-      date = new Date(date);
-    }
-    return Rrecur.getLocaleFromGmtString(date.toString());
-  }
-  Rrecur.stringifyGmtZone = stringifyGmtZone;
   Rrecur.getLocaleFromGmtString = function (locale) {
     // 'Mon Jun 23 2014 10:30:00 GMT-0600 (MDT)' => 'GMT-0600 (MDT)'
     // 'Mon Jun 23 2014 10:30:00 GMT-0600' => 'GMT-0600'
@@ -242,7 +243,7 @@
     // '-0600 (MDT)' => 'GMT-0600 (MDT)'
     // 'GMT-0600' => 'GMT-0600'
     // '-0600' => 'GMT-0600'
-    return locale
+    return locale.toString()
       .replace(/.*(?:GMT)?([\-+]\d{2}):?(00)(\s\(\w{1,6}\))?$/g, 'GMT$1$2$3')
       ;
   };
@@ -269,39 +270,98 @@
       ;
   };
 
-  function stringifyDateStr(str) {
+  function toRruleFromISODate(str) {
     return str.replace(
-      /(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2}):?(\d{2})(?:\.\d+)?([-+Z]\d*)?(.*)/
-    , "$1-$2-$3T$4:$5:$6$7$8"
+      /(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2}):?(\d{2})(?:\.\d+)?(Z)?([-+]\d*)?(.*)/
+    , "$1$2$3T$4$5$6$7"         // $8 $9
+  // YYYYMMDDTHHMMSS(Z)|(-0600) (MDT)
     );
   }
-  function stringifyRruleDate(v, forceZ) {
+
+  function fromRruleToISODate(str, locale) {
+    var newstr
+      ;
+
+    // the RRULE may or may not have 'Z'
+    // if locale is provided and the str does not have 'Z'
+    // then locale should be added to to the string
+    newstr = str.replace(
+      /(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2}):?(\d{2})(Z)?/
+    , "$1-$2-$3T$4:$5:$6.000$7"
+  // YYYY-MM-DDTHH:MM:SS.ms(Z)
+  // yyyy-mm-ddThh:mm:ss.ms(Z)
+    );
+
+    if (newstr !== str && !/Z$/.test(str)) {
+      // TODO strip (MDT)
+      return str + Rrecur.getOffsetFromLocale(locale);
+    }
+  }
+
+  function fromDateToRruleUntil(v) {
+    if ('number' === typeof v) {
+      v = new Date(v).toISOString();
+    } else if ('string' === typeof v) {
+      // convert other string types?
+      v = new Date(v).toISOString();
+    } else if ('object' === typeof v) {
+      v = v.toISOString();
+    } else {
+      throw new Error('bad until date: ' + v);
+    }
+
+    return toRruleFromISODate(v);
+  }
+
+  function fromDateToRruleDtstartZ(v, locale) {
+    // Is ISO String
+    if (/Z$/.test(v.toString())) {
+      return toRruleFromISODate(v);
+    }
+
+    // Is Locale String (either ISO or JavaScript)
+    if (/-\d{4}( \(\w{2,6}\))?$/.test(v.toString())) {
+      return toRruleFromISODate(new Date(v).toISOString());
+    }
+
+    // Is Number (Zulu time)
+    if (/^\d+$/.test(v.toString())) {
+      return toRruleFromISODate(new Date(v).toISOString());
+    }
+
+    // Is zoneless, reinterpret as locale
+    return toRruleFromISODate(Rrecur.toAdjustedISOString(new Date(v.toString()), locale));
+  }
+
+  function fromDateToRruleDtstart(v, locale) {
     if ('number' === typeof v) {
       v = Rrecur.toLocaleISOString(new Date(v), false);
     } else if ('object' === typeof v) {
       v = Rrecur.toLocaleISOString(v, false);
-    }
-
-    if (forceZ && !/Z/.test(v)) {
-      if ('string' === typeof forceZ) {
-        v = new Date(v + forceZ).toISOString();
-      } else {
-        v = v += 'Z';
+    } else if (/^[a-z]/i.test(v)) {
+      v = Rrecur.toLocaleISOString(new Date(v), false);
+    } else {
+      if (!locale) {
+        return toRruleFromISODate(v);
+      }
+      // has locale, is likely an ISO string which needs to be stripped
+      if (/Z$/.test(v)) {
+        v = Rrecur.toLocaleISOString(new Date(v), locale);
       }
     }
 
-    v = v
-      .replace(/[\-+]\d{4}(\s \(\w{1,6}\))?$/, '')
-      .replace(/\-|:/g, '')
-      .replace(/\.\d+/, '')
-      ;
-
-    return v;
+    return toRruleFromISODate(v);
   }
-  Rrecur.stringify = function (orig) {
+
+  Rrecur.fromZonelessDtstartToRrule = function (zoneless, locale) {
+    return zoneless + Rrecur.getOffsetFromLocale(locale);
+  };
+
+  Rrecur.stringify = function (orig, locale) {
     var pairs = []
       , lkeys
       , obj = {}
+      , hasLocale
       ;
 
     Object.keys(orig).forEach(function (k) {
@@ -321,11 +381,14 @@
         localeWarn1 = false;
       }
 
+      // Recent Events
       if (obj.locale) {
         if (!/UTC/.test(obj.locale)) {
-          pairs.push('DTSTART;LOCALE' + '=' + obj.locale + ':' + stringifyRruleDate(obj.dtstart));
+          pairs.push('DTSTART;LOCALE' + '=' + obj.locale + ':' + fromDateToRruleDtstart(obj.dtstart, obj.locale));
           delete obj.dtstart;
         }
+        hasLocale = true;
+        locale = obj.locale;
         delete obj.locale;
       }
     }
@@ -354,8 +417,15 @@
         return;
       }
 
-      if ('UNTIL' === k || 'DTSTART' === k) {
-        v = stringifyRruleDate(v, Rrecur.getOffsetFromLocale(obj.locale || new Date()));
+      if ('UNTIL' === k) {
+        v = fromDateToRruleUntil(v);
+      }
+      if ('DTSTART' === k) {
+        if (hasLocale) {
+          v = fromDateToRruleDtstart(v, locale);
+        } else {
+          v = fromDateToRruleDtstartZ(v, locale);
+        }
       }
 
       if (Array.isArray(v)) {
@@ -377,49 +447,80 @@
     return pairs.join(';');
   };
 
+  function isDateValue(str) {
+    return /^\d+$/.test(str);
+  }
+
+  function isLocaleString(str) {
+    // Mon, June 30...
+    return /^[^\d]/i.test(str);
+  }
+
+  function isLocaleISOString(str) {
+    // 2014-06-30...-0400
+    return /-\d{4}$/.test(str);
+  }
+
+  function isISOString(str) {
+    return /Z$/.test(str);
+  }
+
+  function isZonelessISOString(str) {
+    return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?$/.test(str);
+  }
+
+  function fromZonelessISOString(str) {
+    return str + Rrecur.getOffsetFromLocale(new Date());
+  }
+
   // TODO timezone support (in dtstart)? // -0400 +0530
-  function defaults(freq, dtstart, rrule/*, tzoffset*/) {
+  function defaults(freq, dtstart, rrule, locale) {
     rrule = rrule || {};
 
-    if ('object' !== typeof dtstart) {
-      if ('string' === typeof dtstart) {
-        dtstart = stringifyDateStr(dtstart);
-      }
+    if (isDateValue(dtstart)) {
+      // assume locale
+      dtstart = new Date(dtstart);
+    } else if (isZonelessISOString(dtstart)) {
+      dtstart = new Date(fromZonelessISOString(dtstart));
+    } else if (isISOString(dtstart)) {
       dtstart = new Date(dtstart);
     }
-    switch(freq) {
-      case 'secondly':
-        break;
-      case 'minutely':
-        if (!rrule.bysecond) {
-          rrule.bysecond = [dtstart.getUTCSeconds()];
-        }
-        /* falls through */
-      case 'hourly':
-        if (!rrule.byminute) {
-          rrule.byminute = [dtstart.getUTCMinutes()];
-        }
-        /* falls through */
-      case 'daily':
-        if (!rrule.byhour) {
-          rrule.byhour = [dtstart.getUTCHours()];
-        }
-        /* falls through */
-      case 'weekly':
-        if (!rrule.byday) {
-          rrule.byday = [Rrecur.weekdays[dtstart.getUTCDay()]];
+
+    switch (freq) {
+      case 'yearly':
+        if (!rrule.bymonth) {
+          rrule.bymonth = [dtstart.getMonth() + 1];
         }
         /* falls through */
       case 'monthly':
         if (!rrule.bymonthday) {
-          rrule.bymonthday = [dtstart.getUTCDate()];
+          rrule.bymonthday = [dtstart.getDate()];
         }
         /* falls through */
-      case 'yearly':
-        if (!rrule.bymonth) {
-          rrule.bymonth = [dtstart.getUTCMonth() + 1];
+      case 'weekly':
+        if ('monthly' !== freq && 'yearly' !== freq) {
+          if (!rrule.byday) {
+            rrule.byday = [Rrecur.weekdays[dtstart.getDay()]];
+          }
         }
         /* falls through */
+      case 'daily':
+        if (!rrule.byhour) {
+          rrule.byhour = [dtstart.getHours()];
+        }
+        /* falls through */
+      case 'hourly':
+        if (!rrule.byminute) {
+          rrule.byminute = [dtstart.getMinutes()];
+        }
+        /* falls through */
+      case 'minutely':
+        if (!rrule.bysecond) {
+          rrule.bysecond = [dtstart.getSeconds()];
+        }
+        /* falls through */
+      case 'secondly':
+        break;
     }
 
     return rrule;
@@ -428,7 +529,7 @@
 
   exports.Rrecur = Rrecur;
   exports.Rrecur.parse = parse;
-  exports.Rrecur.parseDtstart = Rrecur.toRruleDateString;
+  exports.Rrecur.parseDtstart = Rrecur.fromRruleToISODateString;
   exports.Rrecur.weekdays = ['su','mo','tu','we','th','fi','sa','su']; // sunday is 0 and 7
   exports.Rrecur.dtstartDefaults = defaults;
 }('undefined' !== typeof exports && exports || new Function('return this')()));

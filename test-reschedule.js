@@ -5,33 +5,33 @@
   var Rrecur = exports.Rrecur || require('./rrecur-iterator').Rrecur
     , ruleObj
     , recur
-    , i
-    , prev
+    , nexttime
+    , nextnext
     ;
 
   ruleObj = {
     freq: 'weekly'
   , interval: '2'
-  //, dtstart: '2014-01-01T10:30:00Z' // beginning of year
   , dtstart: '2014-05-16T10:30:00' // a month ago
-  //, dtstart: new Date()
   , locale: 'GMT-0400 (EDT)'
   //, tzid: "america/new-york"
-  //, dtstart: '2014-07-16T10:30:00Z' // in the future
   , until: '2014-07-16T10:30:00Z'
   , byday: [ 'tu', 'su' ]
   , wkst: 'su'
   };
 
-  recur = Rrecur.create(ruleObj, new Date('2014-06-22T10:30:00-0400'), 'GMT-0400');
+  console.log('nexttime');
+  recur = Rrecur.create(ruleObj, new Date());
+  nexttime = recur.next();
+  console.log(nexttime);
 
-  console.log('prev', recur.previous());
-  /*
-  do (prev = recur.previous()) {
-    console.log('prev', prev);
-  } while()
-  */
-  for (i = 0; i < 10; i += 1) {
-    console.log(i, recur.next());
+  console.log('nexttime');
+  recur = Rrecur.create(ruleObj, new Date(nexttime));
+  nextnext = recur.next();
+  if (nextnext === nexttime) {
+    nexttime = recur.next();
+  } else {
+    nexttime = nextnext;
   }
+  console.log(nexttime);
 }('undefined' !== typeof exports && exports || new Function('return this')()));
