@@ -3,35 +3,47 @@
   'use strict';
 
   var Rrecur = exports.Rrecur || require('./rrecur-iterator').Rrecur
-    , ruleObj
+    , sched
     , recur
     , nexttime
-    , nextnext
     ;
 
-  ruleObj = {
-    freq: 'weekly'
-  , interval: '2'
-  , dtstart: '2014-05-16T10:30:00' // a month ago
-  , locale: 'GMT-0400 (EDT)'
-  //, tzid: "america/new-york"
-  , until: '2014-07-16T10:30:00Z'
-  , byday: [ 'tu', 'su' ]
-  , wkst: 'su'
+  sched = {
+    today: '2014-07-01T10:47:00-0600'
+  , dtstart: {
+      zoneless: '2014-06-16T16:30:00'
+    , locale: 'GMT-0400 (EDT)'
+    }
+  , rrule: {
+      freq: 'weekly'
+    , interval: '1'
+    //, tzid: "america/new-york"
+    , until: '2014-07-16T10:30:00Z'
+    , byday: [ 'tu', 'su' ]
+    , wkst: 'su'
+    }
   };
 
-  console.log('nexttime');
-  recur = Rrecur.create(ruleObj, new Date());
+  console.log('[TDY]', new Date(sched.today));
+  recur = Rrecur.create(sched.rrule, sched.today, sched.dtstart.zoneless, sched.dtstart.locale);
   nexttime = recur.next();
-  console.log(nexttime);
+  console.log('[NXT]', nexttime);
+  console.log('[NXT]', new Date(nexttime), '\n');
 
-  console.log('nexttime');
-  recur = Rrecur.create(ruleObj, new Date(nexttime));
-  nextnext = recur.next();
-  if (nextnext === nexttime) {
-    nexttime = recur.next();
-  } else {
-    nexttime = nextnext;
-  }
-  console.log(nexttime);
+  nexttime = recur.next();
+  console.log('[NXT]', nexttime);
+  console.log('[NXT]', new Date(nexttime), '\n');
+
+  nexttime = new Date(new Date(nexttime).valueOf() + (10 * 1000));
+  recur = Rrecur.create(sched.rrule, new Date(nexttime), sched.dtstart.zoneless, sched.dtstart.locale);
+  nexttime = recur.next();
+  console.log('[NXT]', nexttime);
+  console.log('[NXT]', new Date(nexttime), '\n');
+
+  nexttime = new Date(new Date(nexttime).valueOf() + (10 * 1000));
+  recur = Rrecur.create(sched.rrule, new Date(nexttime), sched.dtstart.zoneless, sched.dtstart.locale);
+  nexttime = recur.next();
+  console.log('[NXT]', nexttime);
+  console.log('[NXT]', new Date(nexttime), '\n');
+
 }('undefined' !== typeof exports && exports || new Function('return this')()));

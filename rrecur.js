@@ -3,8 +3,8 @@
   'use strict';
 
   var rrkeys
-    , localeWarn1 = true
-    , localeWarn2 = true
+    , localeWarn1 = false
+    , localeWarn2 = false
     ;
 
   rrkeys = [
@@ -243,9 +243,20 @@
     // '-0600 (MDT)' => 'GMT-0600 (MDT)'
     // 'GMT-0600' => 'GMT-0600'
     // '-0600' => 'GMT-0600'
-    return locale.toString()
+    var str
+      ;
+
+    str = locale//.toString()
+      .replace(/.*Z$/, 'GMT-0000 (UTC)')
       .replace(/.*(?:GMT)?([\-+]\d{2}):?(00)(\s\(\w{1,6}\))?$/g, 'GMT$1$2$3')
       ;
+
+    if (!/GMT[-+]\d{4}/.test(str)) {
+      console.error("Bad locale string", locale);
+      throw new Error("Bad locale string", locale);
+    }
+
+    return str;
   };
   Rrecur.swapLocale = function (date, locale) {
     return date
@@ -369,7 +380,7 @@
     });
 
     if (obj.tzid) {
-      console.error('[stringify] tzid not yet supported');
+      throw new Error("tzid not yet supported");
       //pairs.push('DTSTART;TZID' + '=' + obj.tzid + ':' + stringifyRruleDate(obj.dtstart));
       //delete obj.dtstart;
       //delete obj.tzid;
