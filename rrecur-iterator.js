@@ -160,14 +160,12 @@
 
     if (!sched.rrule) {
       sched = {
-        today: today || new Date()
-      , dtstart: {
+        dtstart: {
           zoneless: firstTime
         , locale: other
         }
       , rrule: sched
       };
-      sched.today = today || sched.today;
     } else {
       if ('boolean' === typeof firstTime) {
         me._firstTime = firstTime;
@@ -186,6 +184,10 @@
         );
       }
       sched.dtstart.zoneless = Rrecur.utcToOffset(sched.dtstart.utc, sched.dtstart.locale, true);
+    }
+
+    if (!sched.dtstart.utc) {
+      sched.dtstart.utc = Rrecur.fromZonelessDtstartToRrule(sched.dtstart.zoneless, sched.dtstart.locale);
     }
 
     // TODO strictly check incoming formats

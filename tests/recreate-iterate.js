@@ -6,11 +6,11 @@
     , sched
     , recur
     , nexttime
+    , today = '2014-07-01T10:47:00-0600'
     ;
 
   sched = {
-    today: '2014-07-01T10:47:00-0600'
-  , dtstart: {
+    dtstart: {
       zoneless: '2014-06-16T16:30:00'
     , locale: 'GMT-0400 (EDT)'
     }
@@ -24,9 +24,9 @@
     }
   };
 
-  console.log('[TDY]', new Date(sched.today), '\n');
+  console.log('[TDY]', new Date(today), '\n');
   recur = Rrecur.create(sched);
-  //recur = Rrecur.create(sched.rrule, sched.today, sched.dtstart.zoneless, sched.dtstart.locale);
+  //recur = Rrecur.create(sched.rrule, today, sched.dtstart.zoneless, sched.dtstart.locale);
   nexttime = recur.next();
   console.log('[NXT]', nexttime);
   console.log('[SRV]', new Date(nexttime), '\n');
