@@ -3,9 +3,9 @@
   'use strict';
 
   var Rrecur = exports.Rrecur || require('./rrecur').Rrecur
-    , RRule
-    , moment = require('moment')
-    , p
+    , moment = moment || exports.moment || require('moment')
+    , RRule = RRule || exports.RRule || require('rrule').RRule
+    , proto
     ;
 
   function parseOffset(offset) {
@@ -75,13 +75,6 @@
 
     return d.toDate().toISOString();
   }
-  function add(m, rule) {
-    return addSubtract(m, rule, 'add', 1);
-  }
-
-  function subtract(m, rule) {
-    return addSubtract(m, rule, 'subtract', 1);
-  }
 
   function getDtStart(m, ruleObj, method) {
     var d = moment(m)
@@ -89,8 +82,6 @@
 
     return addSubtract(d, ruleObj, method, 2);
   }
-
-  Rrecur.create = Rrecur;
 
   Rrecur.fromISOStringToLocale = function (iso, locale) {
     var offset = Rrecur.getOffsetFromLocale(locale)
@@ -133,33 +124,47 @@
     return new Date(iso.replace(/Z/, '') + offset);
   };
 
-  p = Rrecur.prototype;
-  // TODO XXX XXX Adjust today to be what it would be in the user's locale
-  p.init = function (thing, today, dtstartZoneless, locale) {
-  // TODO p.init = function (thing, locale, dtstartZoneless, today) {
-    // TODO must be ISO / Zulu time
+  Rrecur.create = Rrecur;
+  proto = Rrecur.prototype;
+  proto.init = function (sched, today, firstTime, other) {
+    if (!sched) {
+      return;
+    }
+
     var me = this
       , dtstartZulu
       ;
 
-    RRule = RRule || exports.RRule || require('rrule').RRule;
-    moment = moment || exports.moment || require('moment');
-
-    if (!thing) {
-      return;
-    }
     me._firstTime = true;
     // MDT => MST could happen while the server is running... ugh
     me._serverLocale = Rrecur.getLocaleFromGmtString(new Date().toString());
     me._serverOffset = Rrecur.getOffsetFromLocale(me._serverLocale);
 
+    if (!sched.rrule) {
+      sched = {
+        today: today || new Date()
+      , dtstart: {
+          zoneless: firstTime
+        , locale: other
+        }
+      , rrule: sched
+      };
+      sched.today = today || sched.today;
+    } else {
+      if ('boolean' === typeof firstTime) {
+        me._firstTime = firstTime;
+      }
+    }
+
+    today = today || sched.today;
+
     // TODO strictly check incoming formats
     if ('string' === typeof thing) {
-      me.__rfcString = thing;
-      me.__rruleObj = Rrecur.parse(thing);
+      me.__rfcString = sched.rrule;
+      me.__rruleObj = Rrecur.parse(sched.rrule);
     } else {
-      me.__rfcString = Rrecur.stringify(thing);
-      me.__rruleObj = thing;
+      me.__rfcString = Rrecur.stringify(sched.rrule);
+      me.__rruleObj = sched.rrule;
     }
 
     me._rule = {};
@@ -175,17 +180,17 @@
       throw new Error('TZIDs are not yet implemented');
     }
 
-    if (dtstartZoneless) {
-      if (!locale) {
+    if (sched.dtstart.zoneless) {
+      if (!sched.dtstart.locale) {
         throw new Error("You must specifiy a locale string (or time string) such as 'GMT-0600 (MDT)'");
       }
 
       dtstartZulu = new Date(
-        Rrecur.fromZonelessDtstartToRrule(dtstartZoneless, locale)
+        Rrecur.fromZonelessDtstartToRrule(sched.dtstart.zoneless, sched.dtstart.locale)
       ).toISOString();
 
       me._rule.dtstart = dtstartZulu;
-      me._rule.locale = locale;
+      me._rule.locale = sched.dtstart.locale;
 
       /*
       console.log('[ZLT]', dtstartZoneless, locale);
@@ -205,7 +210,7 @@
     //today = (today || new Date()).toString();
 
     if (!me._rule.locale) {
-      me._rule.locale = locale;
+      me._rule.locale = sched.dtstart.locale;
     }
 
     if (!me._rule.locale) {
@@ -219,7 +224,10 @@
     Rrecur.dtstartDefaults(
       me._rule.freq
       // dtstartZ
-    , Rrecur.toDateFromISOString(dtstartZoneless || dtstartZulu, locale || '-0000')
+    , Rrecur.toDateFromISOString(
+        sched.dtstart.zoneless || dtstartZulu
+      , sched.dtstart.locale || '-0000'
+      )
     , me._rule
     , me._rule.locale
     );
@@ -247,7 +255,7 @@
     //console.log('[RRL]', me._rfcString);
     me._rrule = RRule.fromString(me._rfcString);
   };
-  p.previous = function () {
+  proto.previous = function () {
     var me = this
       , date
       , odate
@@ -277,13 +285,16 @@
 
     return Rrecur.toLocaleISOString(date, me._locale);
   };
-  p.next = function () {
+  proto.next = function (firstTime) {
     var me = this
       , date
       , odate
       , ldate
       ;
 
+    if ('boolean' === typeof firstTime) {
+      me._firstTime = firstTime;
+    }
     /*
     if (!me._rule.until) {
       me._rule.until = getDtStart(me._m, me._rule, 'add');
