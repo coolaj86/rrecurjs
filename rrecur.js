@@ -72,6 +72,9 @@
     return new Date(Rrecur.toLocaleISOString(date, locale)).toISOString();
   };
 
+  Rrecur.toZonelessLocaleISOString = function (date, useoffset) {
+    return Rrecur.stripZone(Rrecur.toLocaleISOString(date), useoffset);
+  };
   Rrecur.toLocaleISOString = function (date, useoffset) {
     // This outputs local time in ISO format with a UTC offset
     var str

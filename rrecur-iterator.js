@@ -43,6 +43,7 @@
 
     return m;
   }
+  Rrecur.diffOffsets = diffOffsets;
  
   function addSubtract(m, rule, method, int) {
     var doubleInt = (rule.interval || 1) * int
@@ -96,6 +97,23 @@
     return str;
   };
 
+  Rrecur.utcToOffset = function (utc, locale, zoneless) {
+    var d = new Date(utc)
+      , m = moment(d).utc()
+      ;
+
+    Rrecur.diffOffsets(
+      m
+    , Rrecur.getOffsetFromLocale(new Date().toString())
+    , Rrecur.getOffsetFromLocale(locale)
+    );
+
+    if (zoneless) {
+      return Rrecur.stripZone(Rrecur.toLocaleISOString(m.toDate(), locale));
+    } else {
+      return Rrecur.toLocaleISOString(m.toDate(), locale);
+    }
+  };
   Rrecur.adustByTzid = function (date, tzid) {
     // TODO convert from tzid to whatever moment understands
     // http://www.twinsun.com/tz/tz-link.htm
@@ -157,6 +175,18 @@
     }
 
     today = today || sched.today;
+    if (!sched.dtstart.zoneless) {
+      if (!sched.dtstart.utc) {
+        if (!sched.dtstart.locale) {
+          throw new Error('Neither zoneless nor utc date specified!');
+        }
+        sched.dtstart.zoneless = Rrecur.toZonelessLocaleISOString(
+          new Date(sched.dtstart.locale)
+        , sched.dtstart.locale
+        );
+      }
+      sched.dtstart.zoneless = Rrecur.utcToOffset(sched.dtstart.utc, sched.dtstart.locale, true);
+    }
 
     // TODO strictly check incoming formats
     if ('string' === typeof thing) {
