@@ -492,7 +492,7 @@
     rrule = rrule || {};
 
     if (isDateValue(dtstart)) {
-      // assume locale
+      // assume current locale
       dtstart = new Date(dtstart);
     } else if (isZonelessISOString(dtstart)) {
       dtstart = new Date(fromZonelessISOString(dtstart));
