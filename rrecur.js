@@ -26,7 +26,7 @@
   , 'WKST'
   , 'BYSETPOS'
 
-  , 'DTSTART' // non-standard as part of this string, but used by rrule
+  , 'DTSTART' // non-standard as part of this string, but used by rrule.js
   ]
   ;
 
@@ -466,12 +466,12 @@
   }
 
   function isLocaleString(str) {
-    // Mon, June 30...
+    // eg Mon, June 30...
     return /^[^\d]/i.test(str);
   }
 
   function isLocaleISOString(str) {
-    // 2014-06-30...-0400
+    // eg 2014-06-30...-0400
     return /-\d{4}$/.test(str);
   }
 

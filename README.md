@@ -1,7 +1,7 @@
 rrecur
 =======
 
-Convert between RFC2445 RRULE and its JSON equivalent.  Useful with `rrule.js`.
+Convert between RFC2445 RRULE and its JSON equivalent AND see the future (and past).  Useful with `rrule.js`.
 
 If you want UIs like these:
 
@@ -11,7 +11,7 @@ Thunderbird Calendar: http://imgur.com/a/LhnWU
 
 Kendo Calendar: http://imgur.com/a/zVLyg
 
-You need a library like this to actually interpret `RRULE`s and schedule the events.
+You need a schedule-logic library like this to actually interpret `RRULE`s and schedule the events.
 
 Usage
 ====
@@ -32,6 +32,7 @@ From JSON to RRULE
     , rfcString
     ;
 
+  // every other month on the first and last sunday
   rfcString = Rrecur.stringify({
     "freq": "monthly"
   , "interval": "2"
@@ -50,14 +51,15 @@ From RRULE to JSON
 
   var Rrecur = exports.Rrecur || require('rrecur').Rrecur
     , rfcString
+    , rruleObject
     ;
 
-  rfcString = Rrecur.stringify({
-    "freq": "monthly"
-  , "interval": "2"
-  , "count": "10"
-  , "byday": ["1su","-1su"]
-  });
+  rfcString = "RRULE:FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU";
+  rruleObject = Rrecur.parse(rfcString);
+
+  // Also supports sans-RRULE prefix plus DTSTART for the sake of `rrule.js` compatability
+  rfcString = "DTSTART=20140616T103000Z;FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0;UNTIL=20150616T153000Z";
+  rruleObject = Rrecur.parse(rfcString);
 
 }('undefined' !== typeof exports && exports || new Function('return this')()));
 ```
@@ -81,6 +83,7 @@ var rrecur
 rrecur = Rrecur.create({
   dtstart: {
     zoneless: Rrecur.toLocaleISOString(new Date(2014,06,21, 10,30,0), "GMT-0400 (EDT)")
+    // OR utc: new Date(2014,06,21, 10,30,0).toISOString()
   , locale: "GMT-0400 (EDT)"
   }
 , rrule: {
@@ -99,6 +102,31 @@ rrecur.next(); // 2014-05-21T10:30:00.000-0400
 
 If you didn't specify `locale` then you would get back a time in UTC
 or in `GMT-0600 (MDT)` that you would need to manually adjust.
+
+Whether you specify `zoneless` or `utc`, you must still specify `locale`.
+
+one-time events
+---------------
+
+```javascript
+var rrecur
+  ;
+
+rrecur = Rrecur.create({
+  dtstart: {
+    locale: new Date(2014,06,21, 10,30,0).toString()
+  }
+, rrule: null
+}, new Date());
+
+// Assuming you specified the Date on a machine running on MDT
+rrecur.next(); // 2014-07-21T16:30:00.000-0000
+```
+
+For one-time events you may simply use a locale string, which will be converted
+into to both `zoneless` and `utc` for internal purposes.
+
+Also, `rrule` will be automatically populated to match the `zoneless` dtstart.
 
 Installation
 ===
@@ -142,7 +170,8 @@ script(src="rrecur-iterator.js")
 ```
 
 I know, it's a lot of dependencies... but that's just how it is.
-In a future version it may be reasonable to drop `underscore` and `rrule`,
+In a future version it may be reasonable to drop `underscore` and `rrule`
+(or at least substitute `lodash` for underscore),
 but `moment` is a must. JavaScript's Date object is just too messed up.
 
 
@@ -234,16 +263,23 @@ DTSTART;LOCALE=GMT-0500 (EST):20140616T103000
 RRULE:FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0;UNTIL=20150616T153000Z
 ```
 
-Non-standard iCal directive (`rrule.js` flavored)
+Non-standard iCal directive (`rrule.js`-flavored)
 
 ```
 DTSTART=20140616T103000Z;FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0;UNTIL=20150616T153000Z
 ```
 
+Appendix
+========
+
+Because I needed a place to rant.
+
 Timezones
-===
+---------
 
 Timezones are a PAIN! Right!?
+
+We take care of the hard brainwork for you, but just so you know:
 
 Here are the problems:
 
@@ -263,9 +299,9 @@ Here are solutions:
 
 Remember:
 
-* Always specify RRULEs in local time
+* Always specify RRULEs in local time (except DTSTART and UNTIL in UTC).
   * An RRULE for Monday at 10am will fire well after the sun is risen whether in California or China
   * An RRULE for Monday at 10am will have a different UTC conversion in California than in China
-  * `dtstart` should always be in local time with a locale or in UTC
+  * `dtstart` should always be in UTC or in local time with a locale
   * `until` must be specified in UTC
   * all calculations will be done in the local time of the server

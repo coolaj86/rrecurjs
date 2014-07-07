@@ -37,7 +37,6 @@
       , directive = commandifyOffset(diff)
       ;
 
-    //console.log(directive);
     m[directive.operation](directive.hours, 'hours');
     m[directive.operation](directive.minutes, 'minutes');
 
@@ -128,12 +127,6 @@
     // so that UTC will change to the appropriate zone
     tzoffset = tzoffset || '-0000';
     return new Date(date.toString().replace(/GMT.*/, 'GMT' + tzoffset/* + ' (' + abbr + ')'*/));
-    /*
-    if ('string' === tzoffset) {
-      // convert from "-0430" to "-04:30"
-      tzoffset = tzoffset.replace(/\d{2}\d{2}/, "$1:$2");
-    }
-    */
   };
   Rrecur.toDateFromISOString = function (iso, locale) {
     var offset = Rrecur.getOffsetFromLocale(locale)
@@ -173,7 +166,6 @@
     }
 
     today = today || sched.today;
-    //console.log('SCHED', sched);
     if (!sched.dtstart.zoneless) {
       if (!sched.dtstart.utc) {
         if (!sched.dtstart.locale) {
@@ -224,13 +216,6 @@
 
       me._rule.dtstart = dtstartZulu;
       me._rule.locale = sched.dtstart.locale;
-
-      /*
-      console.log('[ZLT]', dtstartZoneless, locale);
-      console.log('[??D]', Rrecur.fromZonelessDtstartToRrule(dtstartZoneless, locale));
-      console.log('[UTC]', dtstartZulu);
-      console.log('[SRV]', Rrecur.fromZonelessDtstartToRrule(dtstartZoneless, me._serverLocale));
-      */
     } else if (me._rule.dtstart) {
       dtstartZulu = new Date(me._rule.dtstart).toISOString();
     } else {
@@ -240,15 +225,14 @@
     }
 
     today = new Date(today).toString();
-    //today = (today || new Date()).toString();
 
     if (!me._rule.locale) {
       me._rule.locale = sched.dtstart.locale;
     }
 
     if (!me._rule.locale) {
-      me._rule.locale = 'GMT-0000 (UTC)'; //new Date().toString();
-      throw new Error('no locale was specified');
+      me._rule.locale = 'GMT-0000 (UTC)';
+      throw new Error('no locale was specified (tzid is not yet supported)');
     }
 
     me._rule.locale = Rrecur.getLocaleFromGmtString(me._rule.locale);
@@ -256,20 +240,13 @@
 
     Rrecur.dtstartDefaults(
       me._rule.freq
-      // dtstartZ
     , Rrecur.toDateFromISOString(
-        sched.dtstart.zoneless || dtstartZulu
-      , sched.dtstart.locale || '-0000'
+        sched.dtstart.zoneless
+      , me._serverLocale
       )
     , me._rule
     , me._rule.locale
     );
-
-    /*
-    if (me._rule.count) {
-      delete me._rule.count;
-    }
-    */
 
     // create a string in the timezone of the server
     me._locale = me._rule.locale;
@@ -277,15 +254,14 @@
     delete me._rule.locale;
     delete me._rule.offset;
    
-    //console.log('[LCL]', today);
     me._m = moment(today);
-    //console.log('[LCL]', me._m.format());
-    me._m = diffOffsets(me._m, me._serverOffset, me._offset);
-    //console.log('[<XL]', me._m.format());
+    me._m = diffOffsets(me._m, me._serverOffset, me._offset); // dtstart needs needs to be adjusted by this same amount
 
+    // we must also adjust dtstart, otherwise dtstart could be AFTER the adjusted time
+    // which would erroneously put us further in the future (or past) and get the next (or previous) event
+    me._rule.dtstart = diffOffsets(moment(new Date(me._rule.dtstart)), me._serverOffset, me._offset).toISOString();
     me._rfcString = Rrecur.stringify(me._rule, me._locale);
     // Rrule doesn't support TZID or (my own) LOCALE
-    //console.log('[RRL]', me._rfcString);
     me._rrule = RRule.fromString(me._rfcString);
   };
   proto.previous = function () {
@@ -298,7 +274,6 @@
       me._rule.dtstart = getDtStart(me._m, me._rule, 'subtract');
     }
 
-    //subtract(me._m, me._rule);
     date = me._m.toDate();
     odate = me._m.toDate();
 
@@ -328,21 +303,10 @@
     if ('boolean' === typeof firstTime) {
       me._firstTime = firstTime;
     }
-    /*
-    if (!me._rule.until) {
-      me._rule.until = getDtStart(me._m, me._rule, 'add');
-    }
-    */
-
-    /*
-    add(me._m, me._rule);
-    //return me._rrule.after(me._m.toDate(), true);
-    //*/
 
     date = me._m.toDate();
     odate = me._m.toDate();
 
-    //console.log('[<XL]', odate);
     me._m = moment(me._rrule.after(date, me._firstTime));
 
     if (me._firstTime) {
@@ -354,10 +318,8 @@
       me._m = moment(odate);
       return null;
     }
-    //console.log('[<XL]', date);
 
     ldate = Rrecur.toLocaleISOString(date, me._locale);
-    //console.log('[>XL]', ldate);
 
     return ldate;
   };
