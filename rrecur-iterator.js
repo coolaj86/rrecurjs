@@ -158,7 +158,7 @@
     me._serverLocale = Rrecur.getLocaleFromGmtString(new Date().toString());
     me._serverOffset = Rrecur.getOffsetFromLocale(me._serverLocale);
 
-    if (!sched.rrule) {
+    if (!sched.dtstart || 'object' !== typeof sched.dtstart || !/object/i.test(sched.dtstart.toString())) {
       sched = {
         dtstart: {
           zoneless: firstTime
@@ -173,6 +173,7 @@
     }
 
     today = today || sched.today;
+    //console.log('SCHED', sched);
     if (!sched.dtstart.zoneless) {
       if (!sched.dtstart.utc) {
         if (!sched.dtstart.locale) {
