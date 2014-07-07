@@ -79,15 +79,19 @@ var rrecur
   ;
 
 rrecur = Rrecur.create({
-  dtstart: Rrecur.toLocaleISOString(new Date(2014,06,21, 10,30,0), "GMT-0400 (EDT)")
-, locale: "GMT-0400 (EDT)"
-, byhour: [10]
-, byminute: [30]
-, byday: ['mo','we','fr'] // Or [Rrecur.weekdays[1], Rrecur.weekdays[3], Rrecur.weekdays[5]]
-, until: Rrecur.toAdjustedISOString(new Date(2014,06,22, 10,30,0), "GMT-0400 (EDT)")
-, freq: 'daily'
-, count: 1
-// `bysecond` will default to 00, since that's what's specified in `dtstart`
+  dtstart: {
+    zoneless: Rrecur.toLocaleISOString(new Date(2014,06,21, 10,30,0), "GMT-0400 (EDT)")
+  , locale: "GMT-0400 (EDT)"
+  }
+, rrule: {
+    freq: 'daily'
+  , until: Rrecur.toAdjustedISOString(new Date(2014,06,22, 10,30,0), "GMT-0400 (EDT)")
+  , count: 1
+  , byhour: [10]
+  , byminute: [30]
+  , byday: ['mo','we','fr'] // Or [Rrecur.weekdays[1], Rrecur.weekdays[3], Rrecur.weekdays[5]]
+  // `bysecond` will default to 00, since that's what's specified in `dtstart`
+  }
 }, new Date());
 
 rrecur.next(); // 2014-05-21T10:30:00.000-0400
