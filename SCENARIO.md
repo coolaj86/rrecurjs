@@ -57,6 +57,6 @@ so that it can find out when the schedule will next fire in Fred's time.
 Afterwards example.com has to adjust the time back to its own timezone and, finally, into UTC
 so that it can be searched in the database.
 
-The occurences of Fred's schedule will be:
+The occurrences of Fred's schedule will be:
 
 What a day!

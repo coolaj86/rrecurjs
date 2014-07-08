@@ -189,7 +189,7 @@ Convert between RFC2445 RRULE and its JSON equivalent.
 * `Rrecur.parse(rruleStr)` - parses a string rrule (allows non-standard `dtstart` in string)
 * `Rrecur.stringify(rruleObj)` - stringifies an rrule object (allows non-standard `dtstart`)
 
-Find the next (or previous) occurence of an event in an rrule chain.
+Find the next (or previous) occurrence of an event in an rrule chain.
 
 * `Rrecur.create(rrule, localeDateString)` - creates a wrapped instance from `rrule.js` from an rrule object or string
   * `localeDateString` - a string such as `Wed Jul 16 2014 10:30:00 GMT-0400 (EDT)`
