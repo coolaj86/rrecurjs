@@ -429,6 +429,6 @@
   exports.Rrecur = Rrecur;
   exports.Rrecur.parse = parse;
   exports.Rrecur.parseDtstart = Rrecur.toRruleDateString;
-  exports.Rrecur.weekdays = ['su','mo','tu','we','th','fi','sa','su']; // sunday is 0 and 7
+  exports.Rrecur.weekdays = ['su','mo','tu','we','th','fr','sa','su']; // sunday is 0 and 7
   exports.Rrecur.dtstartDefaults = defaults;
 }('undefined' !== typeof exports && exports || new Function('return this')()));
